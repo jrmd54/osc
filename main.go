@@ -21,6 +21,7 @@ import (
 
 var (
 	oscOpen     string = "\x1b]52;c;"
+	oscOpenTmuxSig []byte = []byte("\x1b]52;;")
 	oscClose    string = "\a"
 	isScreen    bool
 	verboseFlag bool
@@ -207,7 +208,22 @@ func paste() error {
 		}
 
 		slog.Debug(fmt.Sprintf("buf[:7]: %q", buf[:7]))
-		buf = buf[7:]
+        var is_tmux_sig bool = true
+        for i := 0; i < 6 && i < len(buf); i++ {
+            if buf[i] != oscOpenTmuxSig[i] {
+                is_tmux_sig = false
+            }
+        }
+        if is_tmux_sig {
+            // FIXME: in tmux, if data is copied to clipboard on another host, local clipboard content is not updated
+            // ex: [local]  osc_copy foo
+            //     [local]  osc_paste == foo
+            //     [remote] osc_copy bar
+            //     [local]  osc_paste == foo // problem
+            buf = buf[6:]
+        } else {
+            buf = buf[7:]
+        }
 
 		decodedBuf := make([]byte, base64.StdEncoding.DecodedLen(len(buf)))
 		n, err := base64.StdEncoding.Decode(decodedBuf, []byte(buf))
