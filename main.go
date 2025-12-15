@@ -139,7 +139,8 @@ func identifyTerm() error {
 	if isScreen {
 		debugLog.Println("Setting screen dcs passthrough")
 		oscOpen = DCS_OPEN + oscOpen
-		oscClose = oscClose + DCS_CLOSE
+		// oscClose = oscClose + DCS_CLOSE // does not works with kitty
+        oscClose = string(BEL) + oscClose  // cf https://nieko.net/blog/osc-52-and-nested-gnu-screen, works with kitty
 	} else if isTmux {
 		debugLog.Println("Setting tmux dcs passthrough")
 		oscOpen = DCS_OPEN + "tmux;" + string(ESC) + oscOpen
